@@ -733,6 +733,28 @@
                         <!-- Pillars will be dynamically generated -->
                     </div>
 
+                    <div class="birth-date-section" style="margin-bottom: 20px; text-align: center;">
+                        <div style="margin-bottom: 10px;">
+                            <label style="display: inline-block; margin-right: 10px;">
+                                <input type="radio" name="gameMode" value="random" checked onchange="toggleGameMode()"> 随机八字
+                            </label>
+                            <label style="display: inline-block;">
+                                <input type="radio" name="gameMode" value="birthdate" onchange="toggleGameMode()"> 生辰八字
+                            </label>
+                        </div>
+                        <div id="birthDateInputs" style="display: none; background: #f8f9ff; padding: 15px; border-radius: 8px; margin: 10px 0;">
+                            <div style="display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap;">
+                                <label>年: <input type="number" id="birthYear" min="1900" max="2030" value="1990" style="width: 80px;"></label>
+                                <label>月: <input type="number" id="birthMonth" min="1" max="12" value="1" style="width: 60px;"></label>
+                                <label>日: <input type="number" id="birthDay" min="1" max="31" value="1" style="width: 60px;"></label>
+                                <label>时: <input type="number" id="birthHour" min="0" max="23" value="0" style="width: 60px;"></label>
+                                <label style="margin-left: 10px;">
+                                    <input type="checkbox" id="isFemale"> 女性
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="controls">
                         <button class="btn btn-primary" onclick="startNewGame()">新游戏</button>
                         <button class="btn btn-secondary" onclick="clearSelection()">清除选择</button>
@@ -853,17 +875,44 @@
             showMessage('模式已切换，请点击"新游戏"开始', 'info');
         }
 
+        function toggleGameMode() {
+            const isRandomMode = document.querySelector('input[name="gameMode"]:checked').value === 'random';
+            document.getElementById('birthDateInputs').style.display = isRandomMode ? 'none' : 'block';
+        }
+
+        function getBirthDateInput() {
+            const gameMode = document.querySelector('input[name="gameMode"]:checked').value;
+            if (gameMode === 'birthdate') {
+                return {
+                    year: parseInt(document.getElementById('birthYear').value),
+                    month: parseInt(document.getElementById('birthMonth').value),
+                    day: parseInt(document.getElementById('birthDay').value),
+                    hour: parseInt(document.getElementById('birthHour').value),
+                    is_female: document.getElementById('isFemale').checked
+                };
+            }
+            return null;
+        }
+
         async function startNewGame() {
             showLoading();
             try {
                 const currentSettings = loadSettings();
+                const birthDate = getBirthDateInput();
+                
+                const requestBody = { 
+                    advanced_mode: gameData.isAdvancedMode,
+                    settings: currentSettings
+                };
+                
+                if (birthDate) {
+                    requestBody.birth_date = birthDate;
+                }
+                
                 const response = await fetch('/api/new_game', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        advanced_mode: gameData.isAdvancedMode,
-                        settings: currentSettings
-                    })
+                    body: JSON.stringify(requestBody)
                 });
                 
                 if (!response.ok) {

@@ -17,6 +17,7 @@ exports.handler = async (event, context) => {
     const params = JSON.parse(event.body || '{}');
     const advancedMode = params.advanced_mode || false;
     const customSettings = params.settings || {};
+    const birthDate = params.birth_date; // Optional birth date input
     
     // Default settings
     const defaultSettings = {
@@ -63,51 +64,56 @@ exports.handler = async (event, context) => {
       "亥": {"冲": "巳", "刑": "亥", "六": "寅", "害": "申", "破": "寅"}
     };
     
-    // Generate random chart
-    const numPillars = advancedMode ? 6 : 4;
-    const chartGans = Array.from({length: numPillars}, () => gans[Math.floor(Math.random() * gans.length)]);
-    const chartZhis = Array.from({length: numPillars}, () => zhis[Math.floor(Math.random() * zhis.length)]);
+    // Import Bazi calculator
+    const BaziCalculator = require('./bazi_calculator');
+    const calculator = new BaziCalculator();
     
-    const chart = {
-      year_gan: chartGans[0], year_zhi: chartZhis[0],
-      month_gan: chartGans[1], month_zhi: chartZhis[1],
-      day_gan: chartGans[2], day_zhi: chartZhis[2],
-      hour_gan: chartGans[3], hour_zhi: chartZhis[3],
-      gans: chartGans, zhis: chartZhis,
-      date_info: `随机八字 ${chartGans[0]}${chartZhis[0]} ${chartGans[1]}${chartZhis[1]} ${chartGans[2]}${chartZhis[2]} ${chartGans[3]}${chartZhis[3]}`,
-      advanced_mode: advancedMode
-    };
-    
-    if (advancedMode) {
-      chart.dayun_gan = chartGans[4];
-      chart.dayun_zhi = chartZhis[4];
-      chart.liunian_gan = chartGans[5];
-      chart.liunian_zhi = chartZhis[5];
-      chart.current_year = 2024;
+    // Generate chart based on input type
+    let chart;
+    if (birthDate && birthDate.year && birthDate.month && birthDate.day) {
+      // Generate from birth date
+      const hour = birthDate.hour || 0;
+      const isFemale = birthDate.is_female || false;
+      chart = calculator.generateFromBirthDate(
+        birthDate.year, 
+        birthDate.month, 
+        birthDate.day, 
+        hour, 
+        isFemale, 
+        advancedMode
+      );
+    } else {
+      // Generate random chart
+      chart = calculator.generateRandom(advancedMode);
     }
     
     // Complete relationship detection
     const allRelationships = [];
+    const numPillars = advancedMode ? 6 : 4;
+    const chartGans = chart.gans;
+    const chartZhis = chart.zhis;
     
     // 天干关系
     for (let i = 0; i < numPillars; i++) {
       for (let j = i + 1; j < numPillars; j++) {
         const gan1 = chartGans[i], gan2 = chartGans[j];
-        const pair = [gan1, gan2].sort().join('');
+        const pair1 = gan1 + gan2;
+        const pair2 = gan2 + gan1;
         const points = (i >= 4 || j >= 4) && numPillars === 6 ? 15 : 10;
         
         // 天干五合
-        if (settings['天干五合'] && ganHes[pair]) {
-          const element = ganHes[pair].match(/化([土金水木火])/)?.[1] || '';
+        if (settings['天干五合'] && (ganHes[pair1] || ganHes[pair2])) {
+          const relInfo = ganHes[pair1] || ganHes[pair2];
+          const element = relInfo.match(/化([土金水木火])/)?.[1] || '';
           const desc = element ? `${gan1}${gan2}合化${element}` : `${gan1}${gan2}相合`;
           allRelationships.push({
             type: '天干五合', positions: [i, j], characters: [gan1, gan2],
-            description: desc, full_description: ganHes[pair], points: points + 5
+            description: desc, full_description: relInfo, points: points + 5
           });
         }
         
         // 天干相冲
-        if (settings['天干相冲'] && ganChongs[pair]) {
+        if (settings['天干相冲'] && (ganChongs[pair1] || ganChongs[pair2])) {
           allRelationships.push({
             type: '天干相冲', positions: [i, j], characters: [gan1, gan2],
             description: '天干相冲，主冲突不和', points: points - 2
@@ -125,8 +131,9 @@ exports.handler = async (event, context) => {
         
         // 地支六合
         if (settings['地支六合'] && zhiAtts[zhi1]['六'] === zhi2) {
-          const pair = [zhi1, zhi2].sort().join('');
-          const element = zhi6hes[pair] || '';
+          const pair1 = zhi1 + zhi2;
+          const pair2 = zhi2 + zhi1;
+          const element = zhi6hes[pair1] || zhi6hes[pair2] || '';
           const desc = element ? `${zhi1}${zhi2}六合化${element}` : `${zhi1}${zhi2}六合`;
           allRelationships.push({
             type: '地支六合', positions: [zhiPos1, zhiPos2], characters: [zhi1, zhi2],
