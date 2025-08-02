@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>八字关系互动游戏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'SimHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .game-area {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 30px;
+            gap: 30px;
+        }
+
+        .bazi-section {
+            flex: 2;
+            min-width: 400px;
+        }
+
+        .sidebar {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .bazi-chart {
+            background: #f8f9ff;
+            border: 3px solid #e1e5f2;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .chart-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .chart-title {
+            font-size: 1.5rem;
+            color: #4a5568;
+            margin-bottom: 5px;
+        }
+
+        .date-info {
+            color: #718096;
+            font-size: 0.9rem;
+        }
+
+        .pillars {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .pillars.advanced {
+            grid-template-columns: repeat(6, 1fr);
+        }
+
+        .pillar {
+            text-align: center;
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .pillar:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .pillar-label {
+            font-size: 0.8rem;
+            color: #a0aec0;
+            margin-bottom: 8px;
+        }
+
+        .character {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 5px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 8px;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .character:hover {
+            background: #f7fafc;
+            transform: scale(1.1);
+        }
+
+        .character.selected {
+            background: #4299e1;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .character.found {
+            background: #48bb78;
+            color: white;
+            border: 2px solid #2f855a;
+            cursor: pointer;
+            animation: foundPulse 2s ease-in-out;
+        }
+
+        .character.found:hover {
+            background: #38a169 !important;
+            transform: scale(1.1) !important;
+        }
+
+        @keyframes foundPulse {
+            0% { box-shadow: 0 0 0 0 rgba(72, 187, 120, 0.7); }
+            50% { box-shadow: 0 0 0 10px rgba(72, 187, 120, 0.3); }
+            100% { box-shadow: 0 0 0 0 rgba(72, 187, 120, 0); }
+        }
+
+        .gan {
+            color: #e53e3e;
+        }
+
+        .zhi {
+            color: #3182ce;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-success {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .game-info {
+            background: #f7fafc;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .score-display {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .score {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .score-label {
+            color: #718096;
+            margin-bottom: 10px;
+        }
+
+        .progress {
+            background: #e2e8f0;
+            height: 10px;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, #48bb78, #38a169);
+            height: 100%;
+            transition: width 0.5s ease;
+            border-radius: 5px;
+        }
+
+        .hints-section {
+            background: #fff5d6;
+            border: 2px solid #f6e27a;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .hints-title {
+            font-size: 1.2rem;
+            color: #744210;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .hint-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f6e27a;
+        }
+
+        .hint-item:last-child {
+            border-bottom: none;
+        }
+
+        .hint-type {
+            color: #744210;
+            font-weight: bold;
+        }
+
+        .hint-count {
+            background: #ed8936;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .progress-summary {
+            background: #e6fffa;
+            border: 1px solid #81e6d9;
+            border-radius: 6px;
+            padding: 8px 12px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .progress-text {
+            font-size: 0.9rem;
+            color: #234e52;
+            font-weight: bold;
+        }
+
+        .discovered-section {
+            background: #f0fff4;
+            border: 2px solid #9ae6b4;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .discovered-title {
+            font-size: 1.1rem;
+            color: #22543d;
+            margin-bottom: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .discovered-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            border-bottom: 1px solid #c6f6d5;
+            font-size: 0.9rem;
+        }
+
+        .discovered-item:last-child {
+            border-bottom: none;
+        }
+
+        .discovered-type {
+            color: #22543d;
+            font-weight: bold;
+        }
+
+        .discovered-chars {
+            color: #2f855a;
+            font-weight: bold;
+        }
+
+        .discovered-points {
+            background: #48bb78;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .message.success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 2px solid #9ae6b4;
+        }
+
+        .message.error {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 2px solid #feb2b2;
+        }
+
+        .message.info {
+            background: #bee3f8;
+            color: #2a4365;
+            border: 2px solid #90cdf4;
+        }
+
+        .relationship-explanation {
+            background: #f0fff4;
+            border: 2px solid #9ae6b4;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 15px;
+        }
+
+        .explanation-title {
+            color: #22543d;
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .explanation-text {
+            color: #2f855a;
+            line-height: 1.6;
+        }
+
+        .game-complete {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .all-relationships-modal {
+            background: rgba(0, 0, 0, 0.8);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            max-width: 800px;
+            max-height: 80vh;
+            width: 100%;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 15px 15px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            padding: 0;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .relationship-section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .section-title.found {
+            color: #22543d;
+            border-bottom-color: #9ae6b4;
+        }
+
+        .section-title.unfound {
+            color: #744210;
+            border-bottom-color: #f6e27a;
+        }
+
+        .relationship-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .relationship-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            border-radius: 8px;
+            border: 1px solid;
+        }
+
+        .relationship-item.found {
+            background: #f0fff4;
+            border-color: #9ae6b4;
+        }
+
+        .relationship-item.unfound {
+            background: #fff5d6;
+            border-color: #f6e27a;
+        }
+
+        .relationship-info {
+            flex: 1;
+        }
+
+        .relationship-type {
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+
+        .relationship-type.found {
+            color: #22543d;
+        }
+
+        .relationship-type.unfound {
+            color: #744210;
+        }
+
+        .relationship-chars {
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        .relationship-chars.found {
+            color: #2f855a;
+        }
+
+        .relationship-chars.unfound {
+            color: #b45309;
+        }
+
+        .relationship-desc {
+            font-size: 0.9rem;
+            color: #718096;
+            margin-top: 4px;
+        }
+
+        .relationship-points {
+            background: #48bb78;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .relationship-points.unfound {
+            background: #ed8936;
+        }
+
+        .settings-section {
+            margin-bottom: 25px;
+        }
+
+        .settings-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #4a5568;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+
+        .setting-label {
+            font-weight: 500;
+            color: #2d3748;
+        }
+
+        .setting-toggle {
+            position: relative;
+            width: 50px;
+            height: 24px;
+            background: #cbd5e0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .setting-toggle.active {
+            background: #48bb78;
+        }
+
+        .setting-toggle::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .setting-toggle.active::after {
+            transform: translateX(26px);
+        }
+
+        .settings-footer {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #e2e8f0;
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 0.9rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e2e8f0;
+            border-radius: 50%;
+            border-top-color: #667eea;
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 15px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .mode-toggle {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .toggle-btn {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 8px 16px;
+            margin: 0 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        @media (max-width: 768px) {
+            .game-area {
+                flex-direction: column;
+                padding: 15px;
+            }
+            
+            .bazi-section,
+            .sidebar {
+                min-width: auto;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .pillars {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .pillars.advanced {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .character {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>八字关系互动游戏</h1>
+            <p>点击八字找出其中的关系 - 天干相合相冲，地支六合三合等</p>
+        </div>
+
+        <div class="game-area">
+            <div class="bazi-section">
+                <div class="bazi-chart">
+                    <div class="chart-header">
+                        <div class="chart-title">八字排盘</div>
+                        <div class="date-info" id="dateInfo">点击"新游戏"开始</div>
+                    </div>
+
+                    <div class="mode-toggle">
+                        <button class="toggle-btn active" id="basicMode" onclick="setGameMode(false)">基础模式 (4柱)</button>
+                        <button class="toggle-btn" id="advancedMode" onclick="setGameMode(true)">高级模式 (6柱)</button>
+                    </div>
+                    
+                    <div class="pillars" id="pillarsContainer">
+                        <!-- Pillars will be dynamically generated -->
+                    </div>
+
+                    <div class="controls">
+                        <button class="btn btn-primary" onclick="startNewGame()">新游戏</button>
+                        <button class="btn btn-secondary" onclick="clearSelection()">清除选择</button>
+                        <button class="btn btn-success" onclick="checkRelationship()">检查关系</button>
+                        <button class="btn btn-secondary" onclick="showAllRelationships()">显示所有关系</button>
+                        <button class="btn btn-secondary" onclick="showSettings()">设置</button>
+                    </div>
+                </div>
+
+                <div id="messages"></div>
+            </div>
+
+            <div class="sidebar">
+                <div class="game-info">
+                    <div class="score-display">
+                        <div class="score-label">得分</div>
+                        <div class="score" id="score">0</div>
+                        <div class="progress">
+                            <div class="progress-bar" id="progressBar" style="width: 0%"></div>
+                        </div>
+                        <div class="score-label" id="progressText">0 / 0 完成</div>
+                    </div>
+                </div>
+
+                <div class="hints-section">
+                    <div class="hints-title">🔍 关系提示</div>
+                    <div class="progress-summary" id="progressSummary">
+                        <div class="progress-text">已发现: <span id="foundCount">0</span> | 剩余: <span id="remainingCount">0</span></div>
+                    </div>
+                    <div id="hintsContainer">
+                        <div class="hint-item">
+                            <span class="hint-type">开始新游戏查看提示</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="discovered-section" id="discoveredSection" style="display: none;">
+                    <div class="discovered-title">✅ 已发现的关系</div>
+                    <div id="discoveredContainer">
+                        <!-- Discovered relationships will be added here -->
+                    </div>
+                </div>
+
+                <div class="game-info">
+                    <h3 style="margin-bottom: 15px; color: #4a5568;">游戏说明</h3>
+                    <ul style="color: #718096; line-height: 1.8; padding-left: 20px;">
+                        <li>点击2-3个八字寻找关系</li>
+                        <li>天干关系：相合、相冲</li>
+                        <li>地支关系：六合、相冲、三合、三会、半合、半会、相刑、相害、相破</li>
+                        <li>找到关系可获得分数</li>
+                        <li>找出所有关系完成游戏</li>
+                        <li><strong>高级模式：</strong>包含大运和流年，共6柱</li>
+                        <li><strong>大运：</strong>10年运程的天干地支</li>
+                        <li><strong>流年：</strong>当前年份的天干地支</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedPositions = [];
+        let selectedTypes = [];
+        let gameData = null;
+        let isAdvancedMode = false;
+
+        function setGameMode(advanced) {
+            isAdvancedMode = advanced;
+            
+            // Update toggle buttons
+            document.getElementById('basicMode').classList.toggle('active', !advanced);
+            document.getElementById('advancedMode').classList.toggle('active', advanced);
+            
+            // Generate pillars for the selected mode
+            generatePillars();
+            
+            // Clear game data when switching modes
+            gameData = null;
+            clearMessages();
+            showMessage('请点击"新游戏"开始', 'info');
+        }
+
+        function generatePillars() {
+            const container = document.getElementById('pillarsContainer');
+            container.innerHTML = '';
+            container.className = isAdvancedMode ? 'pillars advanced' : 'pillars';
+            
+            const pillarLabels = ['年柱', '月柱', '日柱', '时柱'];
+            if (isAdvancedMode) {
+                pillarLabels.push('大运', '流年');
+            }
+            
+            pillarLabels.forEach((label, index) => {
+                const pillar = document.createElement('div');
+                pillar.className = 'pillar';
+                pillar.innerHTML = `
+                    <div class="pillar-label">${label}</div>
+                    <div class="character gan" data-position="${index}" data-type="gan" id="${getPillarId(index, 'gan')}">-</div>
+                    <div class="character zhi" data-position="${index}" data-type="zhi" id="${getPillarId(index, 'zhi')}">-</div>
+                `;
+                container.appendChild(pillar);
+            });
+            
+            // Re-add event listeners
+            addCharacterEventListeners();
+        }
+
+        function getPillarId(position, type) {
+            const names = ['year', 'month', 'day', 'hour', 'dayun', 'liunian'];
+            return names[position] + (type === 'gan' ? 'Gan' : 'Zhi');
+        }
+
+        function addCharacterEventListeners() {
+            const characters = document.querySelectorAll('.character');
+            characters.forEach(char => {
+                char.addEventListener('click', function() {
+                    if (this.textContent === '-') return;
+                    
+                    // Allow clicking even if temporarily highlighted as "found"
+                    // (we removed the permanent found check)
+                    
+                    const position = parseInt(this.dataset.position);
+                    const type = this.dataset.type;
+                    const uniqueId = `${position}_${type}`;
+                    
+                    if (this.classList.contains('selected')) {
+                        // Deselect
+                        this.classList.remove('selected');
+                        const index = selectedPositions.findIndex(p => `${p.position}_${p.type}` === uniqueId);
+                        if (index > -1) {
+                            selectedPositions.splice(index, 1);
+                            selectedTypes.splice(index, 1);
+                        }
+                    } else {
+                        // Select (limit to 3)
+                        if (selectedPositions.length < 3) {
+                            this.classList.add('selected');
+                            selectedPositions.push({position, type, uniqueId});
+                            selectedTypes.push(type);
+                        } else {
+                            showMessage('最多只能选择3个字符', 'error');
+                        }
+                    }
+                });
+            });
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            generatePillars();
+        });
+
+        async function startNewGame() {
+            showLoading();
+            try {
+                const response = await fetch('/api/new_game', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        advanced_mode: isAdvancedMode
+                    })
+                });
+                
+                const data = await response.json();
+                gameData = data;
+                updateDisplay(data);
+                clearMessages();
+                showMessage('新游戏开始！找出八字中的关系吧！', 'info');
+            } catch (error) {
+                console.error('Error starting new game:', error);
+                showMessage('启动新游戏失败，请重试', 'error');
+            }
+        }
+
+        function updateDisplay(data) {
+            const chart = data.chart;
+            
+            // Update chart display
+            document.getElementById('yearGan').textContent = chart.year_gan;
+            document.getElementById('yearZhi').textContent = chart.year_zhi;
+            document.getElementById('monthGan').textContent = chart.month_gan;
+            document.getElementById('monthZhi').textContent = chart.month_zhi;
+            document.getElementById('dayGan').textContent = chart.day_gan;
+            document.getElementById('dayZhi').textContent = chart.day_zhi;
+            document.getElementById('hourGan').textContent = chart.hour_gan;
+            document.getElementById('hourZhi').textContent = chart.hour_zhi;
+            
+            // Update advanced mode pillars if applicable
+            if (chart.advanced_mode) {
+                document.getElementById('dayunGan').textContent = chart.dayun_gan;
+                document.getElementById('dayunZhi').textContent = chart.dayun_zhi;
+                document.getElementById('liunianGan').textContent = chart.liunian_gan;
+                document.getElementById('liunianZhi').textContent = chart.liunian_zhi;
+                
+                document.getElementById('dateInfo').textContent = 
+                    chart.date_info + ` 大运:${chart.dayun_gan}${chart.dayun_zhi} 流年:${chart.current_year}年${chart.liunian_gan}${chart.liunian_zhi}`;
+            } else {
+                document.getElementById('dateInfo').textContent = chart.date_info;
+            }
+            
+            // Update score and progress
+            document.getElementById('score').textContent = data.score || 0;
+            updateProgress(0, data.total_relationships);
+            
+            // Update hints with progress
+            updateHints(data.hint_counts, 0, data.total_relationships);
+            
+            // Clear discovered relationships display
+            document.getElementById('discoveredSection').style.display = 'none';
+            document.getElementById('discoveredContainer').innerHTML = '';
+            
+            // Clear selections and temporary states
+            clearSelection();
+            document.querySelectorAll('.character').forEach(char => {
+                char.classList.remove('found');
+            });
+        }
+
+        function updateHints(hintCounts, foundCount = 0, totalCount = 0) {
+            const container = document.getElementById('hintsContainer');
+            container.innerHTML = '';
+            
+            // Update progress summary
+            document.getElementById('foundCount').textContent = foundCount;
+            document.getElementById('remainingCount').textContent = totalCount - foundCount;
+            
+            if (Object.keys(hintCounts).length === 0) {
+                container.innerHTML = '<div class="hint-item"><span class="hint-type">暂无剩余关系</span></div>';
+                return;
+            }
+            
+            for (const [type, count] of Object.entries(hintCounts)) {
+                const hintItem = document.createElement('div');
+                hintItem.className = 'hint-item';
+                hintItem.innerHTML = `
+                    <span class="hint-type">${type}</span>
+                    <span class="hint-count">${count}</span>
+                `;
+                container.appendChild(hintItem);
+            }
+        }
+
+        function addDiscoveredRelationship(relationship) {
+            const section = document.getElementById('discoveredSection');
+            const container = document.getElementById('discoveredContainer');
+            
+            // Show the section if it was hidden
+            section.style.display = 'block';
+            
+            // Create discovered item
+            const item = document.createElement('div');
+            item.className = 'discovered-item';
+            item.innerHTML = `
+                <span class="discovered-type">${relationship.type}</span>
+                <span class="discovered-chars">${relationship.characters.join('')}</span>
+                <span class="discovered-points">+${relationship.points}</span>
+            `;
+            
+            // Add to the top of the list
+            container.insertBefore(item, container.firstChild);
+        }
+
+        function updateProgress(found, total) {
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            
+            const percentage = total > 0 ? (found / total) * 100 : 0;
+            progressBar.style.width = percentage + '%';
+            progressText.textContent = `${found} / ${total} 完成`;
+        }
+
+        async function checkRelationship() {
+            if (selectedPositions.length < 2) {
+                showMessage('请至少选择2个字', 'error');
+                return;
+            }
+            
+            try {
+                // Convert positions based on type (gan or zhi)
+                const numPillars = gameData && gameData.chart && gameData.chart.advanced_mode ? 6 : 4;
+                const positions = selectedPositions.map(sel => {
+                    if (sel.type === 'zhi') {
+                        return sel.position + numPillars; // Zhi positions are after gan positions
+                    } else {
+                        return sel.position; // Gan positions are 0-(numPillars-1)
+                    }
+                });
+                
+                const response = await fetch('/api/check_relationship', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        positions: positions
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.found) {
+                    const rel = data.relationship;
+                    showMessage(`找到了！${rel.type}: ${rel.characters.join('')} (+${rel.points}分)`, 'success');
+                    
+                    if (rel.description) {
+                        showRelationshipExplanation(rel.type, rel.description);
+                    }
+                    
+                    // Add to discovered relationships display
+                    addDiscoveredRelationship(rel);
+                    
+                    // Temporarily highlight found characters in green
+                    const foundPositions = [...selectedPositions]; // Copy positions before clearing
+                    foundPositions.forEach(sel => {
+                        const char = document.querySelector(`[data-position="${sel.position}"][data-type="${sel.type}"]`);
+                        if (char) {
+                            char.classList.add('found');
+                            char.classList.remove('selected');
+                        }
+                    });
+                    
+                    // Reset character states after a short delay so they can be used again
+                    setTimeout(() => {
+                        foundPositions.forEach(sel => {
+                            const char = document.querySelector(`[data-position="${sel.position}"][data-type="${sel.type}"]`);
+                            if (char) {
+                                char.classList.remove('found');
+                            }
+                        });
+                    }, 2000); // Remove green highlighting after 2 seconds
+                    
+                    // Update score and progress
+                    document.getElementById('score').textContent = data.score;
+                    const foundCount = gameData.total_relationships - data.remaining_relationships;
+                    updateProgress(foundCount, gameData.total_relationships);
+                    
+                    // Update hints with current progress
+                    await refreshHints();
+                    
+                    // Check if game complete
+                    if (data.game_complete) {
+                        showGameComplete(data.score);
+                    }
+                    
+                } else {
+                    showMessage('选择的字符之间没有关系，请重新选择', 'error');
+                }
+                
+                clearSelection();
+                
+            } catch (error) {
+                console.error('Error checking relationship:', error);
+                showMessage('检查关系时出错，请重试', 'error');
+            }
+        }
+
+        async function refreshHints() {
+            try {
+                const response = await fetch('/api/get_hints');
+                const data = await response.json();
+                const foundCount = gameData.total_relationships - data.total_remaining;
+                updateHints(data.hint_counts, foundCount, gameData.total_relationships);
+            } catch (error) {
+                console.error('Error refreshing hints:', error);
+            }
+        }
+
+        function clearSelection() {
+            selectedPositions = [];
+            selectedTypes = [];
+            document.querySelectorAll('.character.selected').forEach(char => {
+                char.classList.remove('selected');
+            });
+        }
+
+        function showMessage(text, type = 'info') {
+            const messagesContainer = document.getElementById('messages');
+            const message = document.createElement('div');
+            message.className = `message ${type}`;
+            message.textContent = text;
+            
+            messagesContainer.appendChild(message);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (message.parentNode) {
+                    message.parentNode.removeChild(message);
+                }
+            }, 5000);
+        }
+
+        function showRelationshipExplanation(type, description) {
+            const messagesContainer = document.getElementById('messages');
+            const explanation = document.createElement('div');
+            explanation.className = 'relationship-explanation';
+            explanation.innerHTML = `
+                <div class="explanation-title">${type}</div>
+                <div class="explanation-text">${description}</div>
+            `;
+            
+            messagesContainer.appendChild(explanation);
+            
+            // Auto remove after 10 seconds
+            setTimeout(() => {
+                if (explanation.parentNode) {
+                    explanation.parentNode.removeChild(explanation);
+                }
+            }, 10000);
+        }
+
+        function showGameComplete(score) {
+            const messagesContainer = document.getElementById('messages');
+            const complete = document.createElement('div');
+            complete.className = 'game-complete';
+            complete.innerHTML = `
+                <h2>🎉 恭喜完成！</h2>
+                <p style="margin-top: 15px; font-size: 1.2rem;">你找出了所有关系！</p>
+                <p style="margin-top: 10px;">最终得分: <strong>${score}</strong></p>
+                <button class="btn btn-primary" onclick="startNewGame()" style="margin-top: 20px;">开始新游戏</button>
+            `;
+            
+            messagesContainer.appendChild(complete);
+        }
+
+        function clearMessages() {
+            document.getElementById('messages').innerHTML = '';
+        }
+
+        function showLoading() {
+            const messagesContainer = document.getElementById('messages');
+            messagesContainer.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <div>生成新的八字中...</div>
+                </div>
+            `;
+        }
+
+        async function showAllRelationships() {
+            if (!gameData || !gameData.chart) {
+                showMessage('请先开始一个游戏', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/show_all_relationships');
+                const data = await response.json();
+                
+                if (data.error) {
+                    showMessage(data.error, 'error');
+                    return;
+                }
+
+                displayAllRelationshipsModal(data);
+            } catch (error) {
+                console.error('Error showing all relationships:', error);
+                showMessage('获取关系信息时出错，请重试', 'error');
+            }
+        }
+
+        function displayAllRelationshipsModal(data) {
+            // Create modal HTML
+            const modal = document.createElement('div');
+            modal.className = 'all-relationships-modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="modal-title">🔍 所有关系总览</div>
+                        <button class="close-btn" onclick="closeAllRelationshipsModal()">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="relationship-section">
+                            <div class="section-title found">✅ 已发现的关系 (${data.found_count})</div>
+                            <div class="relationship-list" id="foundRelationshipsList"></div>
+                        </div>
+                        <div class="relationship-section">
+                            <div class="section-title unfound">❓ 未发现的关系 (${data.unfound_count})</div>
+                            <div class="relationship-list" id="unfoundRelationshipsList"></div>
+                        </div>
+                        <div style="text-align: center; margin-top: 20px;">
+                            <p><strong>总关系数：${data.total_count}</strong></p>
+                            <p>完成度：${data.found_count}/${data.total_count} (${((data.found_count/data.total_count)*100).toFixed(1)}%)</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Add to body
+            document.body.appendChild(modal);
+            modal.id = 'allRelationshipsModal';
+
+            // Populate found relationships
+            const foundList = document.getElementById('foundRelationshipsList');
+            if (data.found_relationships.length === 0) {
+                foundList.innerHTML = '<div style="text-align: center; color: #718096; padding: 20px;">暂无已发现的关系</div>';
+            } else {
+                data.found_relationships.forEach(rel => {
+                    const item = createRelationshipItem(rel, true);
+                    foundList.appendChild(item);
+                });
+            }
+
+            // Populate unfound relationships
+            const unfoundList = document.getElementById('unfoundRelationshipsList');
+            if (data.unfound_relationships.length === 0) {
+                unfoundList.innerHTML = '<div style="text-align: center; color: #718096; padding: 20px;">所有关系都已发现！</div>';
+            } else {
+                data.unfound_relationships.forEach(rel => {
+                    const item = createRelationshipItem(rel, false);
+                    unfoundList.appendChild(item);
+                });
+            }
+
+            // Close modal when clicking outside
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeAllRelationshipsModal();
+                }
+            });
+        }
+
+        function createRelationshipItem(relationship, isFound) {
+            const item = document.createElement('div');
+            item.className = `relationship-item ${isFound ? 'found' : 'unfound'}`;
+            
+            const statusClass = isFound ? 'found' : 'unfound';
+            const characters = relationship.characters.join('');
+            
+            item.innerHTML = `
+                <div class="relationship-info">
+                    <div class="relationship-type ${statusClass}">${relationship.type}</div>
+                    <div class="relationship-chars ${statusClass}">${characters}</div>
+                    <div class="relationship-desc">${relationship.description || ''}</div>
+                </div>
+                <div class="relationship-points ${statusClass}">+${relationship.points}</div>
+            `;
+            
+            return item;
+        }
+
+        function closeAllRelationshipsModal() {
+            const modal = document.getElementById('allRelationshipsModal');
+            if (modal) {
+                document.body.removeChild(modal);
+            }
+        }
+
+        async function showSettings() {
+            try {
+                const response = await fetch('/api/settings');
+                const data = await response.json();
+                
+                if (data.error) {
+                    showMessage(data.error, 'error');
+                    return;
+                }
+
+                displaySettingsModal(data.relationship_settings);
+            } catch (error) {
+                console.error('Error loading settings:', error);
+                showMessage('加载设置时出错，请重试', 'error');
+            }
+        }
+
+        function displaySettingsModal(settings) {
+            // Create modal HTML
+            const modal = document.createElement('div');
+            modal.className = 'all-relationships-modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="modal-title">⚙️ 关系类型设置</div>
+                        <button class="close-btn" onclick="closeSettingsModal()">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="settings-section">
+                            <div class="settings-title">天干关系</div>
+                            <div id="ganSettings"></div>
+                        </div>
+                        <div class="settings-section">
+                            <div class="settings-title">地支关系</div>
+                            <div id="zhiSettings"></div>
+                        </div>
+                        <div class="settings-footer">
+                            <button class="btn btn-secondary btn-small" onclick="resetToDefaults()">恢复默认</button>
+                            <button class="btn btn-primary btn-small" onclick="saveSettings()">保存设置</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Add to body
+            document.body.appendChild(modal);
+            modal.id = 'settingsModal';
+
+            // Populate settings
+            const ganSettings = document.getElementById('ganSettings');
+            const zhiSettings = document.getElementById('zhiSettings');
+
+            // Group settings by type
+            const ganTypes = ['天干五合', '天干相冲'];
+            const zhiTypes = ['地支相冲', '地支六合', '地支相刑', '地支三合局', '地支三会方', '地支暗合', '地支相害', '地支相破'];
+
+            ganTypes.forEach(type => {
+                if (settings.hasOwnProperty(type)) {
+                    const item = createSettingItem(type, settings[type]);
+                    ganSettings.appendChild(item);
+                }
+            });
+
+            zhiTypes.forEach(type => {
+                if (settings.hasOwnProperty(type)) {
+                    const item = createSettingItem(type, settings[type]);
+                    zhiSettings.appendChild(item);
+                }
+            });
+
+            // Store current settings in modal for later use
+            modal.currentSettings = {...settings};
+
+            // Close modal when clicking outside
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeSettingsModal();
+                }
+            });
+        }
+
+        function createSettingItem(settingKey, isEnabled) {
+            const item = document.createElement('div');
+            item.className = 'setting-item';
+            
+            item.innerHTML = `
+                <div class="setting-label">${settingKey}</div>
+                <div class="setting-toggle ${isEnabled ? 'active' : ''}" data-setting="${settingKey}"></div>
+            `;
+
+            const toggle = item.querySelector('.setting-toggle');
+            toggle.addEventListener('click', function() {
+                const modal = document.getElementById('settingsModal');
+                const currentValue = modal.currentSettings[settingKey];
+                const newValue = !currentValue;
+                
+                modal.currentSettings[settingKey] = newValue;
+                toggle.classList.toggle('active', newValue);
+            });
+            
+            return item;
+        }
+
+        function resetToDefaults() {
+            const modal = document.getElementById('settingsModal');
+            const defaultSettings = {
+                '天干五合': true,
+                '天干相冲': true,
+                '地支相冲': true,
+                '地支六合': true,
+                '地支相刑': true,
+                '地支三合局': true,
+                '地支三会方': true,
+                '地支暗合': true,
+                '地支相害': false,
+                '地支相破': false
+            };
+            
+            modal.currentSettings = {...defaultSettings};
+            
+            // Update toggle states
+            document.querySelectorAll('.setting-toggle').forEach(toggle => {
+                const settingKey = toggle.dataset.setting;
+                const isEnabled = defaultSettings[settingKey];
+                toggle.classList.toggle('active', isEnabled);
+            });
+        }
+
+        async function saveSettings() {
+            const modal = document.getElementById('settingsModal');
+            const settings = modal.currentSettings;
+
+            try {
+                const response = await fetch('/api/settings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        relationship_settings: settings
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage('设置已保存成功', 'success');
+                    closeSettingsModal();
+                    
+                    // If there's an active game, refresh hints to reflect new settings
+                    if (gameData && gameData.chart) {
+                        await refreshHints();
+                    }
+                } else {
+                    showMessage(data.error || '保存设置失败', 'error');
+                }
+            } catch (error) {
+                console.error('Error saving settings:', error);
+                showMessage('保存设置时出错，请重试', 'error');
+            }
+        }
+
+        function closeSettingsModal() {
+            const modal = document.getElementById('settingsModal');
+            if (modal) {
+                document.body.removeChild(modal);
+            }
+        }
+
+        // Start first game on load
+        window.addEventListener('load', function() {
+            startNewGame();
+        });
+    </script>
+</body>
+</html>
