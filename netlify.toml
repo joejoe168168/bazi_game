@@ -1,0 +1,15 @@
+[build]
+  # 这告诉 Netlify 将根目录作为部署的静态文件目录。
+  # 我们的 index.html 将会在这里。
+  publish = "."
+
+[functions]
+  # 这是存放我们 Python serverless functions 的目录。
+  directory = "netlify/functions/"
+
+[[redirects]]
+  # 这条规则会将所有从前端发起的 /api/ 开头的请求，
+  # 转发到 Netlify 的 serverless functions 进行处理。
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
