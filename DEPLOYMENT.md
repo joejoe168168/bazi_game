@@ -83,10 +83,7 @@ bazi2/
   publish = "."
 
 [functions]
-  directory = "netlify/functions/"
-  
-[build.environment]
-  PYTHON_VERSION = "3.8"
+  directory = "netlify/functions"
 
 [[redirects]]
   from = "/api/*"
@@ -100,10 +97,7 @@ lunar-python==1.4.4
 bidict==0.22.1
 ```
 
-#### runtime.txt
-```
-3.8
-```
+Note: Netlify will automatically detect the Python version needed based on your functions.
 
 ## 🔧 故障排除
 

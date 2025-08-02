@@ -1,14 +1,10 @@
 [build]
   publish = "."
-  command = "echo 'No build required for static site'"
 
 [functions]
-  directory = "netlify/functions/"
-  python_version = "3.8"
+  directory = "netlify/functions"
 
 [[redirects]]
-  # 这条规则会将所有从前端发起的 /api/ 开头的请求，
-  # 转发到 Netlify 的 serverless functions 进行处理。
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
