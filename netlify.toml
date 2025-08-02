@@ -1,11 +1,10 @@
 [build]
-  # 这告诉 Netlify 将根目录作为部署的静态文件目录。
-  # 我们的 index.html 将会在这里。
   publish = "."
+  command = "echo 'No build required for static site'"
 
 [functions]
-  # 这是存放我们 Python serverless functions 的目录。
   directory = "netlify/functions/"
+  python_version = "3.8"
 
 [[redirects]]
   # 这条规则会将所有从前端发起的 /api/ 开头的请求，
