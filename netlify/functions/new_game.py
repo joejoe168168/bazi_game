@@ -1,6 +1,12 @@
 # netlify/functions/new_game.py
 # -*- coding: utf-8 -*-
 import json
+import sys
+import os
+
+# Add current directory to path for imports
+sys.path.append(os.path.dirname(__file__))
+
 from bazi_utils import generate_random_bazi, detect_all_relationships
 
 # Default relationship settings
@@ -16,6 +22,18 @@ def handler(event, context):
     """
     Netlify Function handler for starting a new game.
     """
+    # Handle CORS preflight requests
+    if event.get('httpMethod') == 'OPTIONS':
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Content-Type',
+                'Access-Control-Allow-Methods': 'POST, OPTIONS'
+            },
+            'body': ''
+        }
+    
     try:
         # Get request body
         params = json.loads(event.get('body', '{}'))

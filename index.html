@@ -857,7 +857,7 @@
             showLoading();
             try {
                 const currentSettings = loadSettings();
-                const response = await fetch('/api/new_game', {
+                const response = await fetch('/api/new_game_standalone', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
@@ -899,7 +899,7 @@
                 const numPillars = gameData.isAdvancedMode ? 6 : 4;
                 const positions = selectedPositions.map(sel => sel.type === 'zhi' ? sel.position + numPillars : sel.position);
 
-                const response = await fetch('/api/check_relationship', {
+                const response = await fetch('/api/check_relationship_standalone', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({

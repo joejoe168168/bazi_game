@@ -1,18 +1,8 @@
-# netlify/functions/check_relationship.py
-# -*- coding: utf-8 -*-
 import json
-import sys
-import os
-
-# Add current directory to path for imports
-sys.path.append(os.path.dirname(__file__))
-
-from bazi_utils import detect_all_relationships
 
 def handler(event, context):
     """
-    Netlify Function handler for checking a relationship.
-    This function is now stateless. It relies entirely on the data sent from the frontend.
+    Standalone check relationship function
     """
     # Handle CORS preflight requests
     if event.get('httpMethod') == 'OPTIONS':
@@ -38,12 +28,22 @@ def handler(event, context):
         if not all([chart, positions]):
             return {
                 'statusCode': 400,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Headers': 'Content-Type',
+                },
                 'body': json.dumps({'error': 'Missing required data: chart and positions.'})
             }
         
         if len(positions) < 2 or len(positions) > 3:
             return {
                 'statusCode': 400,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Headers': 'Content-Type',
+                },
                 'body': json.dumps({'error': 'Invalid number of positions selected'})
             }
 
@@ -55,28 +55,20 @@ def handler(event, context):
             if sorted(rel.get('actual_positions', [])) == sorted_positions:
                 return {
                     'statusCode': 200,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*',
+                        'Access-Control-Allow-Headers': 'Content-Type',
+                    },
                     'body': json.dumps({'found': False, 'message': 'This relationship has already been found.'})
                 }
 
         # Find a matching relationship from the pre-calculated list
         found_match = None
         for rel in all_relationships:
-            # We must match the characters because positions might differ if zhis are duplicated
-            selected_chars = []
-            num_pillars = 6 if chart.get('advanced_mode') else 4
-            gans = chart.get('gans', [])
-            zhis = chart.get('zhis', [])
-
-            for pos in sorted_positions:
-                if pos >= num_pillars: # This is a zhi position
-                    selected_chars.append(zhis[pos - num_pillars])
-                else: # This is a gan position
-                    selected_chars.append(gans[pos])
-
-            # Check if the selected characters match the relationship's characters
-            if sorted(rel['characters']) == sorted(selected_chars):
+            # Check if positions match any relationship
+            if sorted(rel['positions']) == sorted_positions:
                 # Check if this EXACT combination of positions has been found before
-                # For duplicates like 甲庚庚, [0,1] and [0,2] are different relationships
                 is_already_found = False
                 for found_rel in found_relationships:
                     if (found_rel['type'] == rel['type'] and 
@@ -105,7 +97,7 @@ def handler(event, context):
         else:
             return {
                 'statusCode': 200,
-                 'headers': {
+                'headers': {
                     'Content-Type': 'application/json',
                     'Access-Control-Allow-Origin': '*',
                     'Access-Control-Allow-Headers': 'Content-Type',
