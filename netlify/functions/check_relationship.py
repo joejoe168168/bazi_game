@@ -1,7 +1,7 @@
 # netlify/functions/check_relationship.py
 # -*- coding: utf-8 -*-
 import json
-from .bazi_utils import detect_all_relationships
+from bazi_utils import detect_all_relationships
 
 def handler(event, context):
     """
@@ -57,12 +57,14 @@ def handler(event, context):
 
             # Check if the selected characters match the relationship's characters
             if sorted(rel['characters']) == sorted(selected_chars):
-                # Now, ensure this specific relationship instance hasn't been found via its canonical positions
+                # Check if this EXACT combination of positions has been found before
+                # For duplicates like 甲庚庚, [0,1] and [0,2] are different relationships
                 is_already_found = False
                 for found_rel in found_relationships:
-                    if found_rel['type'] == rel['type'] and sorted(found_rel['characters']) == sorted(rel['characters']):
-                       is_already_found = True
-                       break
+                    if (found_rel['type'] == rel['type'] and 
+                        sorted(found_rel.get('actual_positions', found_rel['positions'])) == sorted_positions):
+                        is_already_found = True
+                        break
                 
                 if not is_already_found:
                     found_match = rel

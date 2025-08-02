@@ -738,6 +738,7 @@
                         <button class="btn btn-secondary" onclick="clearSelection()">清除选择</button>
                         <button class="btn btn-success" onclick="checkRelationship()">检查关系</button>
                         <button class="btn btn-secondary" onclick="showAllRelationships()">显示所有关系</button>
+                        <button class="btn btn-secondary" onclick="showSettings()">设置</button>
                     </div>
                 </div>
 
@@ -805,6 +806,37 @@
 
         let selectedPositions = []; // Holds the current user selection on the board
 
+        // Default relationship settings
+        const DEFAULT_SETTINGS = {
+            '天干五合': true, '天干相冲': true,
+            '地支相冲': true, '地支六合': true,
+            '地支相刑': false, '地支三合局': true,
+            '地支三会方': true, '地支暗合': true,
+            '地支相害': false, '地支相破': false
+        };
+
+        // --- Settings Management ---
+        function loadSettings() {
+            const saved = localStorage.getItem('baziGameSettings');
+            if (saved) {
+                try {
+                    return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
+                } catch (e) {
+                    console.warn('Failed to load settings:', e);
+                    return DEFAULT_SETTINGS;
+                }
+            }
+            return DEFAULT_SETTINGS;
+        }
+
+        function saveSettings(settings) {
+            try {
+                localStorage.setItem('baziGameSettings', JSON.stringify(settings));
+            } catch (e) {
+                console.warn('Failed to save settings:', e);
+            }
+        }
+
         // --- Event Listeners & Initialization ---
         document.addEventListener('DOMContentLoaded', function() {
             setGameMode(false); // Default to basic mode
@@ -824,10 +856,14 @@
         async function startNewGame() {
             showLoading();
             try {
+                const currentSettings = loadSettings();
                 const response = await fetch('/api/new_game', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ advanced_mode: gameData.isAdvancedMode })
+                    body: JSON.stringify({ 
+                        advanced_mode: gameData.isAdvancedMode,
+                        settings: currentSettings
+                    })
                 });
                 
                 if (!response.ok) {
@@ -1165,6 +1201,79 @@
 
         function closeAllRelationshipsModal() {
             document.getElementById('allRelationshipsModal')?.remove();
+        }
+
+        function showSettings() {
+            const currentSettings = loadSettings();
+            
+            const modal = document.createElement('div');
+            modal.className = 'all-relationships-modal';
+            modal.id = 'settingsModal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="modal-title">⚙️ 游戏设置</div>
+                        <button class="close-btn" onclick="closeSettingsModal()">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="settings-section">
+                            <div class="settings-title">关系类型设置</div>
+                            <div id="settingsContainer"></div>
+                            <div class="settings-footer">
+                                <button class="btn btn-secondary btn-small" onclick="resetSettings()">重置默认</button>
+                                <button class="btn btn-primary btn-small" onclick="saveCurrentSettings()">保存设置</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            document.body.appendChild(modal);
+            
+            const container = document.getElementById('settingsContainer');
+            for (const [type, enabled] of Object.entries(currentSettings)) {
+                const item = document.createElement('div');
+                item.className = 'setting-item';
+                item.innerHTML = `
+                    <span class="setting-label">${type}</span>
+                    <div class="setting-toggle ${enabled ? 'active' : ''}" data-setting="${type}" onclick="toggleSetting('${type}')"></div>`;
+                container.appendChild(item);
+            }
+
+            modal.addEventListener('click', e => e.target === modal && closeSettingsModal());
+        }
+
+        function toggleSetting(settingName) {
+            const toggle = document.querySelector(`[data-setting="${settingName}"]`);
+            toggle.classList.toggle('active');
+        }
+
+        function resetSettings() {
+            const container = document.getElementById('settingsContainer');
+            container.innerHTML = '';
+            
+            for (const [type, enabled] of Object.entries(DEFAULT_SETTINGS)) {
+                const item = document.createElement('div');
+                item.className = 'setting-item';
+                item.innerHTML = `
+                    <span class="setting-label">${type}</span>
+                    <div class="setting-toggle ${enabled ? 'active' : ''}" data-setting="${type}" onclick="toggleSetting('${type}')"></div>`;
+                container.appendChild(item);
+            }
+        }
+
+        function saveCurrentSettings() {
+            const settings = {};
+            document.querySelectorAll('.setting-toggle').forEach(toggle => {
+                const settingName = toggle.dataset.setting;
+                settings[settingName] = toggle.classList.contains('active');
+            });
+            
+            saveSettings(settings);
+            closeSettingsModal();
+            showMessage('设置已保存！请点击"新游戏"应用新设置', 'success');
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settingsModal')?.remove();
         }
     </script>
 </body>

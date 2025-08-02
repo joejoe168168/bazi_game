@@ -1,13 +1,13 @@
 # netlify/functions/new_game.py
 # -*- coding: utf-8 -*-
 import json
-from .bazi_utils import generate_random_bazi, detect_all_relationships
+from bazi_utils import generate_random_bazi, detect_all_relationships
 
 # Default relationship settings
 DEFAULT_SETTINGS = {
     '天干五合': True, '天干相冲': True,
     '地支相冲': True, '地支六合': True,
-    '地支相刑': True, '地支三合局': True,
+    '地支相刑': False, '地支三合局': True,
     '地支三会方': True, '地支暗合': True,
     '地支相害': False, '地支相破': False
 }
@@ -20,12 +20,17 @@ def handler(event, context):
         # Get request body
         params = json.loads(event.get('body', '{}'))
         advanced_mode = params.get('advanced_mode', False)
+        custom_settings = params.get('settings', {})
+        
+        # Merge custom settings with defaults
+        settings = DEFAULT_SETTINGS.copy()
+        settings.update(custom_settings)
         
         # Generate a new Bazi chart
         chart = generate_random_bazi(advanced_mode)
         
-        # Detect all possible relationships in the new chart with default settings
-        all_relationships = detect_all_relationships(chart, DEFAULT_SETTINGS)
+        # Detect all possible relationships in the new chart with merged settings
+        all_relationships = detect_all_relationships(chart, settings)
         
         # Prepare the response payload
         payload = {
