@@ -1,0 +1,13 @@
+{
+  "name": "bazi-game",
+  "version": "1.0.0",
+  "description": "Interactive Bazi (Chinese Astrology) Relationship Game",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "keywords": ["bazi", "chinese-astrology", "game"],
+  "author": "Bazi Game Developer",
+  "license": "MIT",
+  "dependencies": {}
+}

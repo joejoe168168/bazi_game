@@ -16,43 +16,48 @@ Failed to load resource: the server responded with a status of 404 ()
 2. **HTML 响应**: 返回的是 404 页面的 HTML 而不是 JSON
 3. **函数路由问题**: `/api/new_game` 路径没有正确映射到函数
 
-## 可能的原因
+## 根本原因
 
-1. **函数导入错误**: `from bazi_utils import ...` 可能在 Netlify 环境中失败
-2. **函数部署失败**: 复杂的依赖关系导致函数无法正常部署
-3. **路径映射问题**: `netlify.toml` 中的重定向规则可能有问题
+**Python 函数在 Netlify 上部署困难**：
+1. **复杂依赖**: `lunar-python`, `bidict` 等依赖在 Netlify 环境中可能不稳定
+2. **导入路径问题**: Python 模块间的相对导入在无服务器环境中复杂
+3. **冷启动性能**: Python 函数启动较慢
+
+## 最终解决方案
+
+**切换到 JavaScript 函数** - 更稳定，部署更可靠：
 
 ## 修复方案
 
-### 方案1: 独立函数 (当前测试)
+### ✅ 最终方案: JavaScript 函数
 
-创建了独立的函数文件，将所有依赖代码内联：
-- `new_game_standalone.py` - 不依赖外部模块
-- `check_relationship_standalone.py` - 简化的关系检查
+创建了 JavaScript 版本的函数，具有以下优势：
+- **无依赖问题**: JavaScript 函数不需要复杂的 Python 依赖
+- **快速部署**: Netlify 对 Node.js 函数支持更好
+- **稳定性高**: 避免了 Python 环境配置问题
 
-### 方案2: 修复导入问题
+### 新函数文件:
 
-为原始函数添加了路径修复：
-```python
-import sys
-import os
-sys.path.append(os.path.dirname(__file__))
-```
+1. **new_game.js** - 生成随机八字和基础关系检测
+2. **check_relationship.js** - 验证用户选择的关系
+3. **test.js** - 简单测试函数
+4. **hello.py** - Python 测试函数（调试用）
 
-### 方案3: CORS 处理
+### CORS 处理
 
-添加了 OPTIONS 请求处理：
-```python
-if event.get('httpMethod') == 'OPTIONS':
-    return {
-        'statusCode': 200,
-        'headers': {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': 'Content-Type',
-            'Access-Control-Allow-Methods': 'POST, OPTIONS'
-        },
-        'body': ''
-    }
+所有函数都包含完整的 CORS 支持：
+```javascript
+if (event.httpMethod === 'OPTIONS') {
+  return {
+    statusCode: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS'
+    },
+    body: ''
+  };
+}
 ```
 
 ## 测试步骤
@@ -70,21 +75,31 @@ if event.get('httpMethod') == 'OPTIONS':
    - 访问 `/api/test` 测试基本函数是否工作
    - 确认 404 是函数问题还是路由问题
 
-## 文件结构
+## 当前文件结构
 
 ```
 netlify/functions/
-├── test.py                      # 简单测试函数
-├── new_game_standalone.py       # 独立新游戏函数 ✅
-├── check_relationship_standalone.py # 独立关系检查函数 ✅
-├── new_game.py                  # 原始函数 (可能有导入问题)
-├── check_relationship.py       # 原始函数 (可能有导入问题)
-└── bazi_utils.py               # 工具函数
+├── new_game.js                  # ✅ JavaScript 新游戏函数 (主要)
+├── check_relationship.js       # ✅ JavaScript 关系检查函数 (主要)
+├── test.js                     # ✅ JavaScript 测试函数
+├── hello.py                    # Python 测试函数
+├── new_game_standalone.py      # Python 独立函数 (备用)
+├── check_relationship_standalone.py # Python 独立函数 (备用)
+└── ...其他 Python 文件
 ```
 
 ## 下一步
 
-1. 测试独立函数版本是否工作
-2. 如果工作，逐步改进功能完整性
-3. 如果不工作，检查 Netlify 部署日志
-4. 根据结果决定是否需要进一步简化或修复路由
+1. **部署 JavaScript 版本** - 应该可以立即工作
+2. **测试基础功能** - 新游戏生成和关系检查
+3. **如果成功** - 可以逐步增强关系检测逻辑
+4. **如果失败** - 检查 Netlify 部署日志找出问题
+
+## 优势
+
+✅ **JavaScript 函数优势**:
+- 无需复杂 Python 依赖
+- Netlify 原生支持更好
+- 部署速度更快
+- 调试更容易
+- 冷启动时间更短

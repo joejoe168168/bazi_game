@@ -1,3 +1,0 @@
-# requirements.txt for Netlify serverless functions
-lunar-python==1.4.4
-bidict==0.22.1
